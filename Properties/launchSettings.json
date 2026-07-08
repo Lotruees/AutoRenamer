@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "AutoRenamer": {
+      "commandName": "Project",
+      "commandLineArgs": "\"C:\\Users\\Willow\\Documents\\Git\\AutoRenamer\\bin\\Debug\\net8.0\\zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzztttest\"",
+      "workingDirectory": "C:\\Users\\Willow\\Documents\\Git\\AutoRenamer\\bin\\Debug\\net8.0"
+    }
+  }
+}
