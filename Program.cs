@@ -634,65 +634,53 @@ namespace AutoMog
                 // IF args includes a Folder
                 batchFiles = DirSearch_ex3(args[0], batchFiles);
                 int index = 0;
-                
-                Console.WriteLine(args[0].Split("\\")[args[0].Split("\\").Length - 1] + ".json");
-                string jsonName = args[0].Split("\\")[args[0].Split("\\").Length - 1] + ".json";
 
-
-                FileStream filestream;
-                SHA256 mySHA256 = SHA256.Create();
-                ModDir curAss = new ModDir();
-                List<ModDir> AllAssets = new List<ModDir>();
-                UAsset Asset = new UAsset(currentFile, EngineVersion.VER_UE4_17);
 
                 foreach (string file in batchFiles)
                 {
                     currentFile = file;
 
                     // IF user's root folder for batch thing is Content then remove content from path and also remove the filename, that's a mouthful yikes
-                    filepath = "/Game" + Regex.Replace(currentFile.Split("\\Content")[1], "\\u005C", "/");//Regex.Replace(Regex.Replace(Path.GetDirectoryName(currentFile.TrimStart(Directory.GetCurrentDirectory().ToCharArray())), "^\\e/content", "", RegexOptions.IgnoreCase), @"\\", "/") + "/";
-                    filepath = Regex.Replace(filepath, "\\.uasset|\\.umap", "");
+                    //filepath = "/Game" + Regex.Replace(currentFile.Split("\\Content")[1], "\\u005C", "/");//Regex.Replace(Regex.Replace(Path.GetDirectoryName(currentFile.TrimStart(Directory.GetCurrentDirectory().ToCharArray())), "^\\e/content", "", RegexOptions.IgnoreCase), @"\\", "/") + "/";
+                    //filepath = Regex.Replace(filepath, "\\.uasset|\\.umap", "");
 
                     // Construct current Asset and then add it to the AllAssets list
+                    UAsset Asset = new UAsset(currentFile, EngineVersion.VER_UE4_17);
                     
                     foreach (CustomVersion cv in Asset.CustomVersionContainer)
                     {
-                        
-                        Console.WriteLine($"Name: {cv.Name} Version: {cv.Version}");
+                        if(String.Equals(cv.FriendlyName, "FRenderingObjectVersion"))
+                        {
+                            if(cv.Version > 20)
+                            {
+                                Console.WriteLine($"Fixing {Path.GetFileNameWithoutExtension(currentFile)}");
+                                cv.Version = 20;   
+                                Asset.Write(currentFile);
+                            }
+                            //Console.WriteLine($"Name: {cv.FriendlyName} Version: {cv.Version}");
+                        }   
                         
                     }
 
                     
                 }
 
+                    Console.Beep();
+                    Console.WriteLine("Parsing complete! \nYou may close the program now.");
+                    Console.Read();
+                    Environment.Exit(0);
 
-                if (findex == 0)
-                {
-                    Console.WriteLine("Parsing complete, no uasset need to be renamed.");
-                }
-                else
-                {
-                    Console.WriteLine("Parsing complete, found " + findex + " out of " + (tindex + findex) + " that need to be replaced.");
-                    Console.WriteLine("Start the Automatic Renaming Process? Y/N");
-                }
-
-                Console.Read();
 
                 //foreach (int i in iary)
                 //{
                     //filepath = "/Game" + Regex.Replace(batchFiles[i].Split("\\Content")[1], "\\u005C", "/");//Regex.Replace(Regex.Replace(Path.GetDirectoryName(currentFile.TrimStart(Directory.GetCurrentDirectory().ToCharArray())), "^\\e/content", "", RegexOptions.IgnoreCase), @"\\", "/") + "/";
                     //program.ReplacePath(batchFiles[i], Regex.Replace(filepath, "\\.uasset|\\.umap", ""), Path.GetFileNameWithoutExtension(batchFiles[i]), batchFiles);
                 //}
-                Console.Read();
 
             }
 
             //Exit Program
             //Console.Clear();
-            Console.Beep();
-            Console.WriteLine("Process complete! \nYou may close the program now.");
-            Console.Read();
-            //Environment.Exit(0);
         }
     }
 }
