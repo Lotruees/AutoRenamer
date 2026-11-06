@@ -634,34 +634,36 @@ namespace AutoMog
                 // IF args includes a Folder
                 batchFiles = DirSearch_ex3(args[0], batchFiles);
                 int index = 0;
+                
                 Console.WriteLine(args[0].Split("\\")[args[0].Split("\\").Length - 1] + ".json");
                 string jsonName = args[0].Split("\\")[args[0].Split("\\").Length - 1] + ".json";
-                if (!File.Exists(jsonName))
+
+
+                FileStream filestream;
+                SHA256 mySHA256 = SHA256.Create();
+                ModDir curAss = new ModDir();
+                List<ModDir> AllAssets = new List<ModDir>();
+                UAsset Asset = new UAsset(currentFile, EngineVersion.VER_UE4_17);
+
+                foreach (string file in batchFiles)
                 {
-                    program.JsonBuilder(batchFiles, jsonName, program);
-                }
-                else
-                {
-                    JsonSerializer serializer = new JsonSerializer();
-                    serializer.Converters.Add(new JavaScriptDateTimeConverter());
-                    serializer.NullValueHandling = NullValueHandling.Ignore;
+                    currentFile = file;
 
-                    serializer.Formatting = Formatting.Indented;
+                    // IF user's root folder for batch thing is Content then remove content from path and also remove the filename, that's a mouthful yikes
+                    filepath = "/Game" + Regex.Replace(currentFile.Split("\\Content")[1], "\\u005C", "/");//Regex.Replace(Regex.Replace(Path.GetDirectoryName(currentFile.TrimStart(Directory.GetCurrentDirectory().ToCharArray())), "^\\e/content", "", RegexOptions.IgnoreCase), @"\\", "/") + "/";
+                    filepath = Regex.Replace(filepath, "\\.uasset|\\.umap", "");
 
-                    List<ModDir> deserializedProduct = new List<ModDir>();
-
-                    using (StreamReader sw = new StreamReader(jsonName))
+                    // Construct current Asset and then add it to the AllAssets list
+                    
+                    foreach (CustomVersion cv in Asset.CustomVersionContainer)
                     {
-                        sw.BaseStream.Seek(0, SeekOrigin.Begin);
-                        deserializedProduct = JsonConvert.DeserializeObject<List<ModDir>>(sw.ReadToEnd());
+                        
+                        Console.WriteLine($"Name: {cv.Name} Version: {cv.Version}");
+                        
                     }
-                    for (int i = 0; i < deserializedProduct.Count; i++)
-                        program.FindPath(deserializedProduct, batchFiles, i);
 
-                    program.JsonBuilder(batchFiles, jsonName, program);
+                    
                 }
-
-
 
 
                 if (findex == 0)
