@@ -277,7 +277,7 @@ namespace AutoMog
             bool refFound = false;
 
             ClearCurrentConsoleLine();
-            Console.Write("\rMain Asset: " + modFiles[modFilesIndex].filePath + "");
+            Console.Write("\rMain Asset: " + modFiles[modFilesIndex].assetPath + "");
 
             if (batchFiles.FindAll(x => ParsePath(x) == modFiles[modFilesIndex].filePath).Count >= 1)
             {
@@ -303,19 +303,25 @@ namespace AutoMog
                 {
                     ClearCurrentConsoleLine();
                     Console.Write("\rMain Asset: " + modFiles[modFilesIndex].filePath + " Current RefAsset: " + RefAssetPath.ToString());
+                    
                     // Main Asset Check
-                    if (String.Equals(modFiles[modFilesIndex].fileName, Path.GetFileNameWithoutExtension(RefAssetPath.ToString()), StringComparison.OrdinalIgnoreCase))
+                    if (String.Equals(modFiles[modFilesIndex].assetName, Path.GetFileNameWithoutExtension(RefAssetPath.ToString()), StringComparison.OrdinalIgnoreCase))
                     {
                         found = true;
                         itemIndex = index;
+
                         if (Math.Abs(String.Compare(modFiles[modFilesIndex].filePath, ParsePath(batchFiles.ElementAt(curIndex)), StringComparison.OrdinalIgnoreCase)) != 0)
                         {
                             Console.BackgroundColor = ConsoleColor.Magenta;
                             Console.WriteLine("\r" + modFiles[modFilesIndex].filePath + " != " + ParsePath(batchFiles.ElementAt(curIndex)));
                             Console.ResetColor();
-                            parsedPath = "/Game" + Regex.Replace(batchFiles.ElementAt(curIndex).Split("\\Content")[1], "\\u005C", "/");
-                            parsedPath = Regex.Replace(parsedPath, "\\.uasset|\\.umap", "");
-                            Console.Write("\rMain Asset: " + modFiles[modFilesIndex].filePath + " Current RefAsset: " + RefAssetPath.ToString() + " are the same.");
+                            //parsedPath = "/Game" + Regex.Replace(batchFiles.ElementAt(curIndex).Split("\\Content")[1], "\\u005C", "/");
+                            //parsedPath = Regex.Replace(parsedPath, "\\.uasset|\\.umap", "");
+                            if (!String.Equals(modFiles[modFilesIndex].assetPath,modFiles[modFilesIndex].filePath))
+                                parsedPath = String.Concat(ParsePath(batchFiles.ElementAt(curIndex)).Split(modFiles[modFilesIndex].assetName)[0],modFiles[modFilesIndex].assetName);    
+                            else
+                                parsedPath = ParsePath(batchFiles.ElementAt(curIndex));
+                            Console.WriteLine($"\rMain Asset: {modFiles[modFilesIndex].filePath} Current RefAsset:  {RefAssetPath.ToString()}  are the same.");
                         }
 
                     }
@@ -334,7 +340,7 @@ namespace AutoMog
                             // Find the equivalent asset that's referenced in the main one, and compare its hashes with the cached one
                             foreach (ModDir mod in modFiles.FindAll(x => x.fileName == Path.GetFileNameWithoutExtension(RefAssetPath.ToString())))
                             {
-                                if (!String.Equals(mod.filePath, RefAssetPath.ToString(), StringComparison.OrdinalIgnoreCase)) continue;
+                                if (!String.Equals(mod.assetPath, RefAssetPath.ToString(), StringComparison.OrdinalIgnoreCase)) continue;
                                     
 
                                 SHA256 newSHA256 = SHA256.Create();
@@ -356,8 +362,14 @@ namespace AutoMog
                             if (!refFound) continue;
 
                             // Parse filepath into a string that UE expects and then check if there are any changes to it
-                            tempParsedPath = "/Game" + Regex.Replace(filee.Split("\\Content")[1], "\\u005C", "/");
-                            tempParsedPath = Regex.Replace(tempParsedPath, "\\.uasset|\\.umap", "");
+
+                            if (!String.Equals(modFiles[modFilesIndex].assetPath,modFiles[modFilesIndex].filePath))
+                                tempParsedPath = String.Concat(ParsePath(filee).Split(modFiles[modFilesIndex].assetName)[0],modFiles[modFilesIndex].assetName);    
+                            else
+                                tempParsedPath = ParsePath(filee);
+                            
+                            //tempParsedPath = "/Game" + Regex.Replace(filee.Split("\\Content")[1], "\\u005C", "/");
+                            //tempParsedPath = Regex.Replace(tempParsedPath, "\\.uasset|\\.umap", "");
                             
                             if (Math.Abs(String.Compare(tempParsedPath, Asset.GetNameReference(index).ToString(), StringComparison.OrdinalIgnoreCase)) != 0)
                             {
@@ -407,7 +419,7 @@ namespace AutoMog
         string ParsePath(string path, bool keepExtension = false)
         {
             string internalParsedPath = "";
-            internalParsedPath = "/Game" + Regex.Replace(path.Split("\\Content")[1], "\\u005C", "/");
+            internalParsedPath = "/Game" + Regex.Replace(path.Split("/Content")[1], "\\u005C", "/");
             if (!keepExtension) internalParsedPath = Regex.Replace(internalParsedPath, "\\.uasset|\\.umap", "");
             return internalParsedPath;
         }
@@ -419,32 +431,34 @@ namespace AutoMog
             SHA256 mySHA256 = SHA256.Create();
             ModDir curAss = new ModDir();
             List<ModDir> AllAssets = new List<ModDir>();
-            UAsset Asset = new UAsset(currentFile, EngineVersion.VER_UE4_17);
-
+            UAsset Asset;
+            int cont = 1;
             foreach (string file in batchFiles)
             {
                 currentFile = file;
 
-                // IF user's root folder for batch thing is Content then remove content from path and also remove the filename, that's a mouthful yikes
-                filepath = "/Game" + Regex.Replace(currentFile.Split("\\Content")[1], "\\u005C", "/");//Regex.Replace(Regex.Replace(Path.GetDirectoryName(currentFile.TrimStart(Directory.GetCurrentDirectory().ToCharArray())), "^\\e/content", "", RegexOptions.IgnoreCase), @"\\", "/") + "/";
-                filepath = Regex.Replace(filepath, "\\.uasset|\\.umap", "");
+                //Asset = new UAsset(currentFile, EngineVersion.VER_UE4_17);
+
 
                 // Construct current Asset and then add it to the AllAssets list
                 filestream = new FileStream(currentFile, FileMode.Open);
                 
                 filestream.Position = 0;
-                curAss.filePath = filepath;
+                ClearCurrentConsoleLine();
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.Write($"LOADING ({cont} / {batchFiles.Count}): {currentFile}");
+                Console.ResetColor();
+                curAss.hash = mySHA256.ComputeHash(filestream);
+                curAss.filePath = ParsePath(currentFile);
+                filestream.Close();
                 curAss.fileName = Path.GetFileNameWithoutExtension(currentFile);
                 curAss.assetPath = GetAssetPathName(currentFile,1);
                 curAss.assetName = GetAssetPathName(currentFile,0);
-                curAss.hash = mySHA256.ComputeHash(filestream);
-                filestream.Close();
-                Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine(currentFile);
-                Console.ResetColor();
+
                 curAss.referencedAssets = program.RefAssetWalker(currentFile, filepath, batchFiles, batchFiles.IndexOf(file));
 
                 AllAssets.Add(curAss);
+                cont++;
             }
 
 
@@ -464,19 +478,80 @@ namespace AutoMog
         {
             UAsset Asset = new UAsset();
             int count = 0;
-            string AssetPathName = null;
+            string AssetPathName = ParsePath(currentFile);
+            string filepath = ""; 
             switch (choice)
             {
-                case 0:
+                case 0: // Get name from serialized entry in the UAsset
+                    try
+                    {
+                        Asset = new UAsset(currentFile, EngineVersion.VER_UE4_17);                    
+                    }
+                    catch(Exception)
+                    {
+                        ClearCurrentConsoleLine();
+                        Console.WriteLine($"FAILED LOADING: {ParsePath(currentFile)}");
+                        return null;
+                    }
 
-                            break;
+                    foreach (FString reff in Asset.GetNameMapIndexList())
+                    {
+                        //Console.WriteLine($"THIS IS THE ASSET SOFT PATH: {Path.GetFileNameWithoutExtension(ParsePath(currentFile).Split("_0")[0])} ");
+                        string pathh = reff.ToString();
+        /*                      
+                        Console.WriteLine($"THIS IS THE ASSET SOFT PATH: {ParsePath(currentFile).Split("_0")[0]}");
+                        Console.WriteLine($"THIS IS THE ASSET SOFT PATH: {reff}");
+                        Console.WriteLine($"THIS IS THE ASSET SOFT PATH: {String.Equals(ParsePath(currentFile).Split("_0")[0],pathh, StringComparison.OrdinalIgnoreCase)}");
+        */
+                        if((String.Equals(Path.GetFileNameWithoutExtension(ParsePath(currentFile)),reff.ToString().Split("_0")[0], StringComparison.OrdinalIgnoreCase) || String.Equals(reff.ToString().Split("_C")[0],Path.GetFileNameWithoutExtension(currentFile), StringComparison.OrdinalIgnoreCase)) && (Path.GetFileNameWithoutExtension(ParsePath(currentFile)).EndsWith("_0") || reff.ToString().EndsWith("_C")))
+                        {
+                            ClearCurrentConsoleLine();
+                            Console.WriteLine($"{Path.GetFileNameWithoutExtension(ParsePath(currentFile))}\n{reff}");
+                            AssetPathName = Path.GetFileNameWithoutExtension(reff.ToString());
+
+                        }
+                    }
+                    break;
                 
-                case 1:
-                    Asset = new UAsset(currentFile, EngineVersion.VER_UE4_17);
+                case 1: // Get path from serialized entry in the UAsset
+                    try
+                    {
+                        Asset = new UAsset(currentFile, EngineVersion.VER_UE4_17);                    
+                    }
+                    catch(Exception)
+                    {
+                        ClearCurrentConsoleLine();
+                        Console.WriteLine($"FAILED LOADING: {ParsePath(currentFile)}");
+                        return null;
+                    }
 
+                    foreach (FString reff in Asset.GetNameMapIndexList())
+                    {
+                        //Console.WriteLine($"THIS IS THE ASSET SOFT PATH: {Path.GetFileNameWithoutExtension(ParsePath(currentFile).Split("_0")[0])} ");
+                        string pathh = reff.ToString();
+        /*                      
+                        Console.WriteLine($"THIS IS THE ASSET SOFT PATH: {ParsePath(currentFile).Split("_0")[0]}");
+                        Console.WriteLine($"THIS IS THE ASSET SOFT PATH: {reff}");
+                        Console.WriteLine($"THIS IS THE ASSET SOFT PATH: {String.Equals(ParsePath(currentFile).Split("_0")[0],pathh, StringComparison.OrdinalIgnoreCase)}");
+        */
+                        if(String.Equals(ParsePath(currentFile).Split("_0")[0],reff.ToString(), StringComparison.OrdinalIgnoreCase) && ParsePath(currentFile).EndsWith("_0"))
+                        {
+                            ClearCurrentConsoleLine();
+                            Console.WriteLine($"{ParsePath(currentFile)}\n{reff}");
+                            AssetPathName = reff.ToString();    
+
+                        }
+
+                    }                      
                     break;
             }
-            return "";
+            
+                
+                
+                
+            
+
+            return AssetPathName;
         }
         
         List<ModDir> RefAssetWalker(string currentFile, string parsedPath, List<String> batchFiles, int curIndex)
@@ -490,8 +565,16 @@ namespace AutoMog
             int fileIndex = -1;
             string tempParsedPath = "";
             string internalParsedPath = "";
-            Asset = new UAsset(currentFile, EngineVersion.VER_UE4_17);
-            List<String> NameMaps = new List<string>();
+            try
+            {
+                Asset = new UAsset(currentFile, EngineVersion.VER_UE4_17);                    
+            }catch(Exception)
+            {
+                ClearCurrentConsoleLine();
+                Console.WriteLine($"FAILED LOADING: {ParsePath(currentFile)}");
+                return null;
+            }
+                    List<String> NameMaps = new List<string>();
             List<int> indexes = new List<int>();
             bool found = false;
             bool refFound = false;
@@ -526,8 +609,11 @@ namespace AutoMog
                         filestream.Position = 0;
                         tempReferencedAsset.filePath = ParsePath(path);
                         tempReferencedAsset.fileName = Path.GetFileNameWithoutExtension(ParsePath(path));
+                        
                         tempReferencedAsset.hash = mySHA256.ComputeHash(filestream);
                         filestream.Close();
+                        tempReferencedAsset.assetPath = GetAssetPathName(path,1);
+                        tempReferencedAsset.assetName = GetAssetPathName(path,0);
 
                         referencedAssets.Add(tempReferencedAsset);
 
@@ -636,6 +722,7 @@ namespace AutoMog
                 int index = 0;
                 Console.WriteLine(args[0].Split("\\")[args[0].Split("\\").Length - 1] + ".json");
                 string jsonName = args[0].Split("\\")[args[0].Split("\\").Length - 1] + ".json";
+                
                 if (!File.Exists(jsonName))
                 {
                     program.JsonBuilder(batchFiles, jsonName, program);
