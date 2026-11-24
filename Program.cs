@@ -490,7 +490,7 @@ namespace AutoMog
                     catch(Exception)
                     {
                         ClearCurrentConsoleLine();
-                        Console.WriteLine($"FAILED LOADING: {ParsePath(currentFile)}");
+                        Console.WriteLine($"FAILED LOADING: {currentFile}");
                         return null;
                     }
 
@@ -504,21 +504,31 @@ namespace AutoMog
                         Console.WriteLine($"THIS IS THE ASSET SOFT PATH: {String.Equals(ParsePath(currentFile).Split("_0")[0],pathh, StringComparison.OrdinalIgnoreCase)}");
         */
                         
-                        // Check for _0 and _C suffix Edge case 
-                        if((String.Equals(Path.GetFileNameWithoutExtension(ParsePath(currentFile)).Split("_0")[0],reff.ToString(), StringComparison.OrdinalIgnoreCase) || String.Equals(reff.ToString().Split("_C")[0],Path.GetFileNameWithoutExtension(currentFile), StringComparison.OrdinalIgnoreCase)) && (Path.GetFileNameWithoutExtension(ParsePath(currentFile)).EndsWith("_0") || reff.ToString().EndsWith("_C")))
+                        // Check for _0 suffix Edge case 
+                        if(Path.GetFileNameWithoutExtension(ParsePath(currentFile)).EndsWith("_0") && String.Equals(Path.GetFileNameWithoutExtension(ParsePath(currentFile)).Split("_0")[0],reff.ToString(), StringComparison.OrdinalIgnoreCase))
                         {
-                            ClearCurrentConsoleLine();
-                            //Console.WriteLine($"{ParsePath(currentFile)}\n{reff}");
+
+                            //ClearCurrentConsoleLine();
+                            //Console.WriteLine($"_0 {ParsePath(currentFile)}\n{reff}");
                             AssetPathName = reff.ToString();
                             return AssetPathName;
 
                         }
-
+                        // Check for _C suffix Edge case 
+                        if (reff.ToString().EndsWith("_C") && String.Equals(reff.ToString(), String.Concat(Path.GetFileNameWithoutExtension(currentFile), "_C") , StringComparison.OrdinalIgnoreCase))
+                        {
+                                //ClearCurrentConsoleLine();
+                                //Console.WriteLine($"_C {ParsePath(currentFile)}\n{reff}");
+                                AssetPathName = reff.ToString();
+                                return AssetPathName;
+                         
+                        }
+                            
                         // Find Serialized name using the filename
                         if(String.Equals(Path.GetFileNameWithoutExtension(ParsePath(currentFile).Split("_0")[0]),reff.ToString(), StringComparison.OrdinalIgnoreCase))
                         {
-                            ClearCurrentConsoleLine();
-                            //Console.WriteLine($"case 1: {ParsePath(currentFile)}\n{reff}");
+                            //ClearCurrentConsoleLine();
+                            //Console.WriteLine($"case 0: {ParsePath(currentFile)}\n{reff}");
                             AssetPathName = reff.ToString();
                             return AssetPathName;
 
@@ -534,7 +544,7 @@ namespace AutoMog
                     catch(Exception)
                     {
                         ClearCurrentConsoleLine();
-                        Console.WriteLine($"FAILED LOADING: {ParsePath(currentFile)}");
+                        Console.WriteLine($"FAILED LOADING: {currentFile}");
                         return null;
                     }
 
@@ -547,6 +557,7 @@ namespace AutoMog
                         Console.WriteLine($"THIS IS THE ASSET SOFT PATH: {reff}");
                         Console.WriteLine($"THIS IS THE ASSET SOFT PATH: {String.Equals(ParsePath(currentFile).Split("_0")[0],pathh, StringComparison.OrdinalIgnoreCase)}");
         */
+
                         // Check for _0 suffix Edge case 
                         if(String.Equals(ParsePath(currentFile).Split("_0")[0],reff.ToString(), StringComparison.OrdinalIgnoreCase) && ParsePath(currentFile).EndsWith("_0"))
                         {
@@ -560,7 +571,7 @@ namespace AutoMog
                         // Find Serialized path using the filename
                         if(String.Equals(Path.GetFileNameWithoutExtension(ParsePath(currentFile).Split("_0")[0]),Path.GetFileNameWithoutExtension(reff.ToString()), StringComparison.OrdinalIgnoreCase) && reff.ToString().Contains('/'))
                         {
-                            ClearCurrentConsoleLine();
+                            //ClearCurrentConsoleLine();
                             //Console.WriteLine($"case 1: {ParsePath(currentFile)}\n{reff}");
                             AssetPathName = reff.ToString();
                             return AssetPathName;
@@ -593,7 +604,7 @@ namespace AutoMog
             }catch(Exception)
             {
                 ClearCurrentConsoleLine();
-                Console.WriteLine($"FAILED LOADING: {ParsePath(currentFile)}");
+                Console.WriteLine($"FAILED LOADING: {currentFile}");
                 return null;
             }
                     List<String> NameMaps = new List<string>();
