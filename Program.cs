@@ -270,7 +270,17 @@ namespace AutoMog
             int cont = 0;
             string tempParsedPath = "";
             string parsedPath = "";
-            Asset = new UAsset(filePath, EngineVersion.VER_UE4_17);
+            try
+            {
+                Asset = new UAsset(filePath, EngineVersion.VER_UE4_17);
+            }
+            catch (Exception)
+            {
+                ClearCurrentConsoleLine();
+                Console.WriteLine($"FAILED LOADING: {filePath}");
+                return;
+            }
+
             List<String> NameMaps = new List<string>();
             List<int> indexes = new List<int>();
             bool found = false;
@@ -364,7 +374,7 @@ namespace AutoMog
                             // Parse filepath into a string that UE expects and then check if there are any changes to it
 
                             if (!String.Equals(modFiles[modFilesIndex].assetPath,modFiles[modFilesIndex].filePath))
-                                tempParsedPath = String.Concat(ParsePath(filee).Split(modFiles[modFilesIndex].assetName)[0],modFiles[modFilesIndex].assetName);    
+                                tempParsedPath = String.Concat(ParsePath(filee).Split(modFiles[modFilesIndex].fileName)[0],modFiles[modFilesIndex].assetName);    
                             else
                                 tempParsedPath = ParsePath(filee);
                             
@@ -419,7 +429,7 @@ namespace AutoMog
         string ParsePath(string path, bool keepExtension = false)
         {
             string internalParsedPath = "";
-            internalParsedPath = "/Game" + Regex.Replace(path.Split("/Content")[1], "\\u005C", "/");
+            internalParsedPath = "/Game" + Regex.Replace(path.Split("\\Content")[1], "\\u005C", "/");
             if (!keepExtension) internalParsedPath = Regex.Replace(internalParsedPath, "\\.uasset|\\.umap", "");
             return internalParsedPath;
         }
